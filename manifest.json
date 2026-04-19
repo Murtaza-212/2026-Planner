@@ -1,0 +1,20 @@
+{
+  "name": "2026 Planner — Build the Life You Planned For",
+  "short_name": "Planner 2026",
+  "description": "A personal Islamic growth planner for 2026",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#c9a84c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230a0a0a'/><text y='140' x='20' font-size='130' font-family='serif'>☽</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "productivity"],
+  "prefer_related_applications": false
+}

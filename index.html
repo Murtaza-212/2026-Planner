@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#c9a84c" media="(prefers-color-scheme: dark)"/>
+<meta name="theme-color" content="#8a6e28" media="(prefers-color-scheme: light)"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Planner 2026"/>
+<link rel="manifest" href="./manifest.json"/>
+<title>2026 Planner — Build the Life You Planned For</title>
+<style>
+/* ═══════════════════════════════════════════════════
+   THEME TOKENS
+═══════════════════════════════════════════════════ */
+:root {
+  --bg:#0a0a0a; --surface:#111; --surface2:#0d0d0d; --surface3:#161616;
+  --border:#1e1e1e; --border2:#2a2a2a; --border3:#161616;
+  --text:#e0e0e0; --text-sub:#ccc; --text-muted:#888; --text-dim:#555; --text-dimmer:#3a3a3a;
+  --input-bg:#0d0d0d; --input-border:#222; --hover-bg:#1a1a1a;
+  --tab-active-bg:#c9a84c18; --check-done:#555;
+  --gold:#c9a84c; --purple:#a87fc9; --green:#7eb89a; --blue:#6b9fd4;
+  --red:#d46b6b; --pink:#c47fa4;
+  --shadow:0 4px 24px rgba(0,0,0,.5);
+  color-scheme: dark;
+}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#f5f5f0; --surface:#fff; --surface2:#f0f0ea; --surface3:#e8e8e0;
+  --border:#ddd; --border2:#ccc; --border3:#e8e8e3;
+  --text:#1a1a1a; --text-sub:#333; --text-muted:#666; --text-dim:#888; --text-dimmer:#bbb;
+  --input-bg:#f9f9f6; --input-border:#ddd; --hover-bg:#eee;
+  --check-done:#aaa; --shadow:0 4px 24px rgba(0,0,0,.12);
+  color-scheme: light;
+}}
+[data-theme="light"]{
+  --bg:#f5f5f0; --surface:#fff; --surface2:#f0f0ea; --surface3:#e8e8e0;
+  --border:#ddd; --border2:#ccc; --border3:#e8e8e3;
+  --text:#1a1a1a; --text-sub:#333; --text-muted:#666; --text-dim:#888; --text-dimmer:#bbb;
+  --input-bg:#f9f9f6; --input-border:#ddd; --hover-bg:#eee;
+  --check-done:#aaa; --shadow:0 4px 24px rgba(0,0,0,.12);
+  color-scheme: light;
+}
+[data-theme="dark"]{color-scheme:dark;}
+
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  min-height:100vh;transition:background .25s,color .25s;-webkit-font-smoothing:antialiased;
+  font-size:14px;
+}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+button{cursor:pointer;border:none;background:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
+textarea,input,select{font-family:inherit;outline:none}
+input[type=range]{-webkit-appearance:none;appearance:none;background:var(--border2);border-radius:99px;height:4px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer}
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════ */
+.app-header{
+  position:sticky;top:0;z-index:101;background:var(--bg);
+  border-bottom:1px solid var(--border3);padding:10px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  transition:background .25s;gap:10px;
+}
+.tab-bar{
+  position:sticky;top:49px;z-index:100;background:var(--bg);
+  border-bottom:1px solid var(--border3);display:flex;gap:2px;
+  padding:6px 10px;overflow-x:auto;scrollbar-width:none;transition:background .25s;
+}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-bar button{
+  padding:7px 13px;border-radius:8px;font-size:11px;font-family:monospace;
+  letter-spacing:.6px;color:var(--text-muted);transition:all .18s;white-space:nowrap;flex-shrink:0;
+}
+.tab-bar button.active{background:var(--tab-active-bg);color:var(--gold);border:1px solid #c9a84c44}
+.tab-bar button:not(.active):hover{color:var(--text-sub);background:var(--hover-bg)}
+.content{max-width:940px;margin:0 auto;padding:20px 16px calc(100px + env(safe-area-inset-bottom,0px))}
+
+/* ═══════════════════════════════════════════════════
+   CARDS & COMPONENTS
+═══════════════════════════════════════════════════ */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;margin-bottom:12px;
+  transition:background .25s,border-color .25s;
+}
+.label{color:var(--text-dim);font-size:9px;font-family:monospace;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px}
+.bar-track{height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.mono{font-family:monospace}
+.italic{font-style:italic}
+
+/* Buttons */
+.btn-ghost{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:5px 10px;color:var(--text-muted);font-size:11px;transition:all .15s;
+}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text-sub)}
+.btn-gold{
+  background:linear-gradient(135deg,#c9a84c,#a87630);border:none;
+  border-radius:10px;padding:10px 16px;color:#fff;font-size:12px;
+  font-family:monospace;font-weight:700;transition:all .15s;
+}
+.btn-gold:hover{opacity:.85;transform:translateY(-1px)}
+.btn-green{
+  background:#7eb89a18;border:1px solid #7eb89a44;border-radius:10px;
+  padding:10px 16px;color:#7eb89a;font-size:12px;font-family:monospace;font-weight:700;transition:all .15s;
+}
+
+/* ═══════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════ */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:env(safe-area-inset-top,12px) 12px env(safe-area-inset-bottom,12px);
+  backdrop-filter:blur(4px);
+}
+@media(min-height:600px){.modal-bg{align-items:center;padding:16px;}}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border2);border-radius:18px;
+  padding:20px;width:100%;max-width:580px;
+  max-height:calc(100dvh - env(safe-area-inset-top,12px) - env(safe-area-inset-bottom,12px) - 32px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+
+/* ═══════════════════════════════════════════════════
+   CHECKLIST
+═══════════════════════════════════════════════════ */
+.check-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border3)}
+.check-row:last-child{border-bottom:none}
+.check-box{
+  width:20px;height:20px;border:2px solid var(--border2);border-radius:5px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;margin-top:1px;
+}
+.check-box.checked{background:var(--gold);border-color:var(--gold)}
+.check-label{font-size:13px;color:var(--text-sub);line-height:1.4;cursor:pointer}
+.check-label.done{color:var(--check-done);text-decoration:line-through}
+
+/* ═══════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════ */
+.audio-btn{
+  display:inline-flex;align-items:center;gap:5px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:8px;padding:5px 10px;
+  font-size:10px;font-family:monospace;color:var(--text-muted);cursor:pointer;transition:all .15s;
+}
+.audio-btn:hover{border-color:var(--purple);color:var(--purple)}
+.audio-btn.playing{background:#a87fc918;border-color:#a87fc966;color:var(--purple)}
+
+/* ═══════════════════════════════════════════════════
+   OFFLINE BAR
+═══════════════════════════════════════════════════ */
+.offline-bar{background:#e03e3e;color:#fff;text-align:center;padding:4px;font-size:10px;font-family:monospace;letter-spacing:1px;display:none}
+.offline-bar.visible{display:block}
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:#7eb89a;color:#fff;padding:10px 18px;border-radius:10px;
+  font-size:12px;font-family:monospace;font-weight:700;z-index:500;
+  box-shadow:var(--shadow);opacity:0;transition:opacity .25s,transform .25s;
+  pointer-events:none;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:#e03e3e}
+
+/* ═══════════════════════════════════════════════════
+   CONFIRM DIALOG
+═══════════════════════════════════════════════════ */
+.confirm-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-box{background:var(--surface);border:1px solid #e03e3e44;border-radius:16px;padding:28px;max-width:340px;width:100%;text-align:center}
+
+/* ═══════════════════════════════════════════════════
+   INPUTS
+═══════════════════════════════════════════════════ */
+input[type=text],textarea,select{
+  background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;
+  padding:10px 13px;color:var(--text);font-size:13px;width:100%;line-height:1.6;
+  transition:border-color .18s,background .25s,color .25s;
+}
+input[type=text]:focus,textarea:focus,select:focus{border-color:#c9a84c66}
+select{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+}
+option{background:var(--surface);color:var(--text)}
+
+/* ═══════════════════════════════════════════════════
+   TOGGLE SWITCH
+═══════════════════════════════════════════════════ */
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:99px;cursor:pointer;transition:background .18s}
+.toggle input:checked + .toggle-track{background:var(--gold)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .18s;pointer-events:none}
+.toggle input:checked ~ .toggle-thumb{transform:translateX(16px)}
+
+/* ═══════════════════════════════════════════════════
+   BADGE
+═══════════════════════════════════════════════════ */
+.badge{display:inline-flex;align-items:center;border-radius:99px;padding:2px 8px;font-family:monospace;font-size:10px;font-weight:700}
+
+/* ═══════════════════════════════════════════════════
+   ANIMATION
+═══════════════════════════════════════════════════ */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .2s ease forwards}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 1.5s ease-in-out infinite}
+
+/* ═══════════════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════════════ */
+@media print{
+  .app-header,.tab-bar,.no-print{display:none!important}
+  .content{padding:0;max-width:100%}
+}
+
+/* ═══════════════════════════════════════════════════
+   MOBILE PADDING
+═══════════════════════════════════════════════════ */
+@media(max-width:600px){
+  .content{padding-bottom:90px}
+  input[type=text],.check-label{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- Offline indicator -->
+<div id="offline-bar" class="offline-bar">⚡ Offline — all data saved locally</div>
+
+<!-- Header -->
+<div class="app-header" id="app-header">
+  <div style="min-width:0">
+    <div style="font-size:15px;font-weight:800;font-family:Georgia,serif;color:var(--text);letter-spacing:-.3px">Build the life you planned for</div>
+    <div id="date-banner" style="font-size:9px;font-family:monospace;color:var(--text-dim);margin-top:2px"></div>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+    <div id="streak-badge" style="display:none;background:#c9a84c18;border:1px solid #c9a84c44;border-radius:8px;padding:3px 9px;font-family:monospace;font-size:11px;color:var(--gold);font-weight:700"></div>
+    <button class="btn-ghost" data-action="openSyncModal"   style="padding:4px 8px;font-size:10px" title="Sync / Export">🔄</button>
+    <button class="btn-ghost" data-action="openExportModal" style="padding:4px 8px;font-size:10px" title="Download data">💾</button>
+    <button id="theme-btn" class="btn-ghost" data-action="toggleTheme" style="padding:4px 8px;font-size:13px">☀️</button>
+  </div>
+</div>
+
+<!-- Tab bar — now includes History and Tasbeeh tabs -->
+<div class="tab-bar" id="tab-bar">
+  <button class="active" id="tab-home"     data-tab="home">🏠 Home</button>
+  <button id="tab-goals"    data-tab="goals">🎯 Goals</button>
+  <button id="tab-progress" data-tab="progress">📊 Progress</button>
+  <button id="tab-hifz"     data-tab="hifz">🕌 Hifz</button>
+  <button id="tab-tasbeeh"  data-tab="tasbeeh">✦ Tasbeeh</button>
+  <button id="tab-habits"   data-tab="habits">🚫 Habits</button>
+  <button id="tab-schedule" data-tab="schedule">📅 Schedule</button>
+  <button id="tab-history"  data-tab="history">📅 History</button>
+  <button id="tab-days"     data-tab="days">📍 Year Grid</button>
+</div>
+
+<!-- Main content -->
+<div class="content fade-in" id="main-content">
+  <div style="text-align:center;padding:60px 20px;color:var(--text-dim);font-family:monospace;font-size:12px">Loading…</div>
+</div>
+
+<!-- Weekly review modal -->
+<div id="weekly-modal" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" id="weekly-box"></div>
+</div>
+
+<!-- Goal modal (progress/checklist) -->
+<div id="modal-bg" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<!-- Goal editor modal -->
+<div id="goal-edit-modal" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" id="goal-edit-box" style="max-width:500px"></div>
+</div>
+
+<!-- Confirm dialog -->
+<div id="confirm-bg" class="confirm-bg" style="display:none">
+  <div class="confirm-box">
+    <div style="font-size:22px;margin-bottom:10px">⚠️</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">Clear all progress?</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">This cannot be undone.</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('confirm-bg').style.display='none'" class="btn-ghost" style="flex:1;padding:10px;font-size:12px">Cancel</button>
+      <button onclick="confirmClear()" style="flex:1;background:#e03e3e18;border:1px solid #e03e3e44;border-radius:10px;padding:10px;color:#e03e3e;font-size:13px;font-weight:700;cursor:pointer">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync modal -->
+<div id="sync-modal" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div><div class="label">Cross-Device Sync</div><div style="font-size:15px;font-weight:700;font-family:Georgia,serif">Export &amp; Import</div></div>
+      <button onclick="document.getElementById('sync-modal').style.display='none'" style="color:var(--text-dim);font-size:24px;line-height:1">×</button>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div class="label" style="margin-bottom:8px">📤 Export — copy your progress code</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">All progress, hifz, reviews, goals are exported as a compact code.</div>
+      <button class="btn-gold" onclick="doExport()" style="width:100%">Generate Export Code</button>
+      <textarea id="export-out" rows="3" style="margin-top:10px;font-size:10px;letter-spacing:.3px" readonly placeholder="Code appears here…"></textarea>
+      <button class="btn-ghost" onclick="copyExportCode()" style="margin-top:6px;width:100%;font-family:monospace;font-size:11px">📋 Copy Code</button>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px">
+      <div class="label" style="margin-bottom:8px">📥 Import — paste code from another device</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px"><strong style="color:#e03e3e">⚠️ This will overwrite current progress.</strong></div>
+      <textarea id="import-in" placeholder="Paste export code here…" rows="3" style="font-size:10px"></textarea>
+      <button class="btn-green" onclick="doImport()" style="margin-top:8px;width:100%">Import &amp; Apply</button>
+      <div id="import-status" style="font-size:11px;font-family:monospace;text-align:center;margin-top:8px;min-height:16px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Export / download modal -->
+<div id="export-modal" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" style="max-width:420px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div><div class="label">Export Data</div><div style="font-size:15px;font-weight:700;font-family:Georgia,serif">Download Your Progress</div></div>
+      <button onclick="document.getElementById('export-modal').style.display='none'" style="color:var(--text-dim);font-size:24px">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn-gold" onclick="exportJSON()" style="width:100%;text-align:left;padding:14px 16px">
+        <div style="font-size:13px">📦 Download JSON</div>
+        <div style="font-size:10px;opacity:.7;margin-top:2px;font-weight:400">Full data backup — reimportable</div>
+      </button>
+      <button class="btn-ghost" onclick="exportCSV()" style="width:100%;text-align:left;padding:14px 16px;border-radius:10px">
+        <div style="font-size:13px">📊 Download CSV</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Goal progress as spreadsheet</div>
+      </button>
+      <button class="btn-ghost" onclick="exportNotionText()" style="width:100%;text-align:left;padding:14px 16px;border-radius:10px">
+        <div style="font-size:13px">📋 Copy as Notion / Markdown</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">Paste-ready formatted progress report</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Offline detection -->
+<script>
+  function updateOnlineStatus(){
+    document.getElementById('offline-bar').classList.toggle('visible', !navigator.onLine);
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // Safe dispatcher — queues calls until module registers handlers
+  var _pendingCalls = [];
+  var _appReady = false;
+  function _dispatch(action, arg) {
+    if (_appReady && window[action]) {
+      window[action](arg);
+    } else {
+      _pendingCalls.push([action, arg]);
+    }
+  }
+  window._markAppReady = function() {
+    _appReady = true;
+    // Flush banner + render first, then any queued actions
+    if (typeof window.updateBanner === 'function') window.updateBanner();
+    if (typeof window.render === 'function') window.render();
+    _pendingCalls.forEach(function(c){ if(window[c[0]]) window[c[0]](c[1]); });
+    _pendingCalls = [];
+  };
+
+  // Tab bar event delegation
+  document.getElementById('tab-bar').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-tab]');
+    if (btn) _dispatch('showTab', btn.dataset.tab);
+  });
+
+  // Header button event delegation
+  document.getElementById('app-header').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-action]');
+    if (btn) _dispatch(btn.dataset.action);
+  });
+</script>
+
+<!-- Load app as ES module — ui.js must import first so globals register before initApp renders -->
+<script type="module">
+  import './ui.js'; // registers window.render, window.showToast, window.showTab, etc.
+  import { initApp } from './app.js';
+  await initApp();
+  window._markAppReady(); // flush banner + render + any queued tab/action calls
+</script>
+
+</body>
+</html>
